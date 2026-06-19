@@ -2,50 +2,30 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const path = require("path");
 
 const app = express();
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use(express.static("public"));
-
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url} - ${new Date().toLocaleString()}`);
-    next();
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 mongoose.connect(process.env.MONGO_URI)
-.then(() => {
-    console.log("MongoDB Connected Successfully");
-})
-.catch((error) => {
-    console.log(error.message);
-});
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log("MongoDB Error:", err));
 
 const bookRoutes = require("./routes/books");
-
 app.use("/api/books", bookRoutes);
 
 app.get("/api", (req, res) => {
-    res.status(200).json({
-        message: "Online Bookstore API Running"
-    });
+    res.json({ message: "API Running" });
 });
 
 app.use((req, res) => {
-    res.status(404).json({
-        message: "Route Not Found"
-    });
+    res.status(404).json({ message: "Route Not Found" });
 });
 
-app.use((err, req, res, next) => {
-    res.status(500).json({
-        message: err.message || "Internal Server Error"
-    });
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-    console.log(`Server Running On Port ${PORT}`);
-});
+module.exports = app;
